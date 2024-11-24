@@ -10,4 +10,4 @@ Our mission is to create a system that will not only help users identify whether
 
 William A. Pearson
 Sulaiman Alam
-Mohammed Awad
+Mohamed Awad
