@@ -10,7 +10,7 @@ public class DecisionTree {
 	Double[] bloodPressureFeatures;
 	Double[] skinThicknessFeatures;
 	Double[] insulinFeatures;
-	Double[] bmiFeatures;
+	Double[] bmiFeatures; 
 	Double[] diabetesPedigreeFunctionFeatures;
 	Integer[] ageFeatures;
 	Double[] outcomeFeatures;
@@ -31,7 +31,7 @@ public class DecisionTree {
 		this.root = root;
 	}
 
-	public TreeNode createTree(TreeNode root) {
+	public TreeNode createTree(TreeNode root) { // creating the tree
 		
 		if(root == null) {
 			return null;
@@ -103,7 +103,7 @@ public class DecisionTree {
 		
 		for(int i = 0; i < root.getSample().length; i++) {
 			patients = root.getSample()[i];
-			for(int j = 0; j < patients.length; j++) {
+			for(int j = 0; j < patients.length; j++) { //getting the data from patients
 				pregnanciesFeatures[j] = patients[j].getPregnancies();
 				glucoseFeatures[j] = patients[j].getGlucose();
 				bloodPressureFeatures[j] = patients[j].getBloodPressure();
