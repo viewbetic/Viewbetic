@@ -4,24 +4,45 @@ public class TreeNode{
 	
 	TreeNode left;
 	TreeNode right;
+	Feature splitFeature;
 	Double splitValue;
-	Patient[][] sample;
+	Sample[] samples;
 	
-	TreeNode(Patient[][] sample){
-		this.sample = sample;
+	//public TreeNode(){
+	//	
+	//}
+	
+	public TreeNode(TreeNode root) {
+		this.samples = root.getSample();
 	}
 	
-	TreeNode(Patient[][] sample, Double splitValue){
-		this.sample = sample;
+	TreeNode(Sample[] sample){
+		this.samples = sample;
+	}
+	
+	TreeNode(Sample[] sample, Double splitValue){
+		this(sample);
 		this.splitValue = splitValue;
 	}
 	
-	public TreeNode(TreeNode root) {
-		
+	public TreeNode getLeft() {
+		return left;
 	}
 
-	public Patient[][] getSample() {
-		return sample;
+	public TreeNode getRight() {
+		return right;
+	}
+	
+	public void setLeft(TreeNode left) {
+		this.left = left;
+	}
+
+	public void setRight(TreeNode right) {
+		this.right = right;
+	}
+	
+	public Sample[] getSample() {
+		return samples;
 	}
 	
 	public Double getSplitValue() {
@@ -31,7 +52,12 @@ public class TreeNode{
 	public void setSplitValue(Double splitValue) {
 		this.splitValue = splitValue;
 	}
-
 	
+	public Feature getSplitFeature() {
+		return splitFeature;
+	}
 	
+	public void setSplitFeature(Feature splitFeature) {
+		this.splitFeature = splitFeature;
+	}
 }

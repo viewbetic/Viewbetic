@@ -2,229 +2,254 @@ package home;
 
 import java.util.Arrays;
 
-public class DecisionTree {
+public class DecisionTree implements TreeOperator {
 	
+	//private static final ViewbeticUI viewbeticUI = ViewbeticUI.createUI(new Home());
 	private TreeNode root;
-	Double[] pregnanciesFeatures;
-	Double[] glucoseFeatures;
-	Double[] bloodPressureFeatures;
-	Double[] skinThicknessFeatures;
-	Double[] insulinFeatures;
-	Double[] bmiFeatures; 
-	Double[] diabetesPedigreeFunctionFeatures;
-	Integer[] ageFeatures;
-	Double[] outcomeFeatures;
+	private PatientFeatureFinder featureFinder;
+	//FeatureStore featureStore;
+	private SampleCleaner cleaner;
 	
 	public DecisionTree() {
-		pregnanciesFeatures = new Double[Home.getPatientCount()];
-		glucoseFeatures = new Double[Home.getPatientCount()];
-		bloodPressureFeatures = new Double[Home.getPatientCount()];
-		skinThicknessFeatures = new Double[Home.getPatientCount()];
-		insulinFeatures = new Double[Home.getPatientCount()];
-		bmiFeatures = new Double[Home.getPatientCount()];
-		diabetesPedigreeFunctionFeatures  = new Double[Home.getPatientCount()];
-		ageFeatures = new Integer[Home.getPatientCount()];
-		outcomeFeatures = new Double[Home.getPatientCount()];
+		featureFinder = new PatientFeatureFinder();
+		cleaner = new SampleCleaner();
+		//featureStore = new FeatureStore();
 	}
 	
-	public DecisionTree(TreeNode root) {
-		this.root = root;
+	public DecisionTree(TreeNode node) {
+		this.root = node;
 	}
-
-	public TreeNode createTree(TreeNode root) { // creating the tree
-		
+	
+	@Override
+	public TreeNode createTree(TreeNode node) {
 		if(root == null) {
-			return null;
+			root = node;
 		}
 		
-		TreeNode r = new TreeNode(root);
-		
-		Double splitValue = findSplitValue(root);
-		
-		root.setSplitValue(splitValue);
-		
-		root.left = splitNode(root, splitValue);
-		root.right = splitNode(root, splitValue);
-		
-		return root;
-	}
-
-	public Double findSplitValue(TreeNode node) {
-	
-		Patient[][] sample = node.getSample();
-		
-		int patientCount = 0;
-
-		for(int i = 0; i < sample.length; i++) {
-			patientCount += sample[i].length;
-			System.out.println(patientCount);
+		if(node.getSplitFeature() != null && node.getSplitFeature().isFeatureUsed()) {
+			return node;
 		}
 		
-		Patient[] patients = new Patient[patientCount];
+		Double splitValue = null;
+		Feature locatedFeature = null;
+		Feature patientFeature = null;
 		
-		int patientIndex = 0;
-		for(int i = 0; i < sample.length; i++) {
-			for(int j = 0; j < sample[i].length; j++) {
-				patients[patientIndex++] = sample[i][j];
+		for(int i = 0; i < node.getSample().length; i++) {
+			Sample sample = node.getSample()[i];
+			//viewbeticUI.setMessage("Sample ID is: " + sample.getSampleId());
+			if(sample.getPatients() != null && sample.getPatients().length > 0) {
+				for(int j = 0; j < sample.getPatients().length; j++) {
+				Feature[] features = sample.getPatients()[j].getPatientFeatures();
+					for (int k = 0; k < features.length; k++) {
+						if(!features[k].getFeatureName().equals("Outcome") && !features[k].isFeatureUsed()) { 
+							patientFeature = features[k];
+					
+							Double currentSplitValue = findSplitValue(sample, patientFeature);
+							TreeNode tempSplitNode = splitNode(node, currentSplitValue, patientFeature);
+							TreeNode leftNode = tempSplitNode.getLeft();
+							TreeNode rightNode = tempSplitNode.getRight();
+							int totalOutcomes = 0;
+							
+							for(int m = 0; m < node.getSample().length; m++) {
+								for(int n = 0; n < node.getSample()[m].getPatients().length; n++) {
+									Feature outcomeFeature = featureFinder.findFeatureByName(node.getSample()[m].getPatients()[m], "Outcome");
+									totalOutcomes += (Integer)outcomeFeature.getFeatureValue();
+								}
+							}
+							
+							double weightedGini = calculateWeightedGiniIndex(leftNode, rightNode, totalOutcomes);
+							
+							if(locatedFeature == null || weightedGini < calculateWeightedGiniIndex(splitNode(leftNode, splitValue, patientFeature).getLeft(), 
+																		 							splitNode(rightNode, splitValue, patientFeature).getRight(), 
+																		 							totalOutcomes)) {
+									splitValue = currentSplitValue;
+									locatedFeature = patientFeature;
+							}
+						}	
+					}
+				}
 			}
 		}
 		
-		sortPatientsByBMI(patients); //Test
 		
-        //This is not finished
-      
-		return null;
-}
-
-	public TreeNode splitNode(TreeNode node, Double value) {
+		if(locatedFeature != null) {
+		node.setSplitValue(splitValue);
+		node.setSplitFeature(locatedFeature);
 		
+		locatedFeature.setIsFeatureUsed(true);
+		
+		TreeNode splitNode = splitNode(node, splitValue, locatedFeature);
+		
+		node.setLeft(createTree(splitNode.getLeft()));
+		node.setRight(createTree(splitNode.getRight()));
+		
+		} else {
+			System.out.println("No more features available");
+		}
 		return node;
 	}
-	
-	private Double[] sortPatientsByBMI(Patient[] patients) { //Test
-		
-		Double[] bmiValues = new Double[patients.length];
-		
-		for(int i = 0; i < patients.length; i++) {
-			bmiValues[i] = patients[i].getBMI();
-		}
-		Arrays.sort(bmiValues);
-		
-		return bmiValues;
-	}
 
-	private void sortPatients(Patient[] patients) { //Not working
+	@Override
+	public Double findSplitValue(Sample sample, Feature feature) {
+		String featureName = feature.getFeatureName();
+		Double[] featureValues = new Double[sample.getPatients().length]; 
 		
-		Arrays.sort(patients);
-	}
-	
-	public void getFeature(TreeNode root) {
-		Patient[] patients;
+		int index = 0;
 		
-		for(int i = 0; i < root.getSample().length; i++) {
-			patients = root.getSample()[i];
-			for(int j = 0; j < patients.length; j++) { //getting the data from patients
-				pregnanciesFeatures[j] = patients[j].getPregnancies();
-				glucoseFeatures[j] = patients[j].getGlucose();
-				bloodPressureFeatures[j] = patients[j].getBloodPressure();
-				skinThicknessFeatures[j] = patients[j].getskinThickness();
-				insulinFeatures[j] = patients[j].getInsulin();
-				bmiFeatures[j] = patients[j].getBMI();
-				diabetesPedigreeFunctionFeatures[j] = patients[j].getDiabetesPedigreeFunction();
-				ageFeatures[j] = patients[j].getAge();
-				outcomeFeatures[j] = patients[j].getOutcome();
+		for(int i = 0; i < sample.getPatients().length; i++) {
+			Feature featureLocated = featureFinder.findFeatureByName(sample.getPatients()[i], featureName);
+			
+			if(featureLocated != null) {
+				featureValues[index++] = featureLocated.getFeatureValue().doubleValue();
 			}
 		}
+		
+		Arrays.sort(featureValues);
+		
+		int size = featureValues.length;
+		Double medianValue;
+		
+		if(size % 2 == 1) { 
+			medianValue = featureValues[size / 2];
+		}
+		else {
+			medianValue = (featureValues[(size / 2) - 1] + featureValues[size / 2]) / 2.0;
+		}
+		return medianValue;
 	}
-	
+
+	@Override
 	public double calculateGiniIndex(TreeNode node) {
 		double noOutcome = 0;
 		double yesOutcome = 0;
 		
+		PatientFeatureFinder featureFinder = new PatientFeatureFinder();
+		
 		for(int i = 0; i < node.getSample().length; i++) {
-			for( int j = 0; j < node.getSample()[i].length; j++) {
-				if (node.getSample()[i][j].getOutcome() == 0) {
+			for(int j = 0; j < node.getSample()[i].getPatients().length; j++) {
+				Feature feature = featureFinder.findFeatureByName(node.getSample()[i].getPatients()[j], "Outcome");
+				if ((Integer)feature.getFeatureValue() == 0) {
 					noOutcome++;
 				}
-				else if (node.getSample()[i][j].getOutcome() == 1) {
+				else if ((Integer)feature.getFeatureValue() == 1) {
 					yesOutcome++;
 				}
 			}
 		}
+		
 		double totalOutcome = yesOutcome + noOutcome;
 		double noAverage = noOutcome / totalOutcome;
 		double yesAverage = yesOutcome / totalOutcome;
 		
-		double impurity = 1 - (noAverage * noAverage + yesAverage * yesAverage);
+		double purity = 1 - (noAverage * noAverage + yesAverage * yesAverage);
 		
-		return impurity;
+		return purity;
 	}
 
-	public TreeNode createCleanNode(Patient[][] cleanRandomSample) {
-		root = new TreeNode(cleanRandomSample);
-		return root;
+	@Override
+	public double calculateWeightedGiniIndex(TreeNode leftNode, TreeNode rightNode, int totalOutcome) {
+		Double leftGini = calculateGiniIndex(leftNode);
+		Double rightGini = calculateGiniIndex(rightNode);
+		
+		int leftSize = leftNode.getSample().length;
+		int rightSize = rightNode.getSample().length;
+		
+		Double weightGini = ((leftSize + leftGini) + (rightSize + rightGini)) / totalOutcome;
+		return weightGini;
+	}
+
+	@Override
+	public TreeNode splitNode(TreeNode node, Double splitValue, Feature feature) {
+		String featureName = feature.getFeatureName();
+		int totalPatients = 0;
+		
+		for(int i = 0; i < node.getSample().length; i++) {
+			totalPatients += node.getSample()[i].getPatients().length;
+		}
+		 
+		Sample leftSample = new Sample(totalPatients);
+		Sample rightSample = new Sample(totalPatients);
+		
+		for(int i = 0; i < node.getSample().length; i++) {
+			for(int j = 0; j < node.getSample()[i].getPatients().length; j++) {
+				Patient tempPatient = node.getSample()[i].getPatients()[j];
+				
+				Feature tempFeature = featureFinder.findFeatureByName(tempPatient, featureName);
+				if(tempFeature != null) {
+					
+					Double featureValue = tempFeature.getFeatureValue().doubleValue();
+					if(featureValue <= splitValue) {
+						leftSample.addToPatientSample(tempPatient);
+					} else if(featureValue > splitValue) {
+						rightSample.addToPatientSample(tempPatient);
+					}
+				}
+			}
+		}
+
+		Sample leftRemoved = cleaner.removeEmpty(leftSample);
+		Sample cleanLeftSample = cleaner.createCleanSample(leftRemoved);
+
+		Sample rightRemoved = cleaner.removeEmpty(rightSample);
+		Sample cleanRightSample = cleaner.createCleanSample(rightRemoved);
+		
+		Sample[] newLeftSample = {cleanLeftSample};
+		Sample[] newRightSample = {cleanRightSample};
+		
+		node.setLeft(new TreeNode(newLeftSample, splitValue));
+		node.setRight(new TreeNode(newRightSample, splitValue));
+		
+		return node;
 	}
 	
-	public TreeNode getRoot() {
-		return root;
+	public boolean makePrediction(TreeNode node) {
+		int yesOutcome = 0;
+		int noOutcome = 0;
+		boolean result = false;
+		boolean treePrediction = false;
+		
+		if(node.getLeft() == null && node.getRight() == null) {
+			for(int i = 0; i < node.getSample().length; i++) {
+				for(int j = 0; j < node.getSample()[i].getPatients().length; j++) {
+					Feature[] features = node.getSample()[i].getPatients()[j].getPatientFeatures();
+					for (int k = 0; k < features.length; k++) {
+						if(features[k].getFeatureName().equals("Outcome")){
+							if((Integer)features[k].getFeatureValue() == 1) {
+								yesOutcome++;
+							} else {
+								noOutcome++;
+							}
+						}
+					}
+				}
+			}	
+			result = yesOutcome > noOutcome;
+			return result; 
+		} else {
+			for (int i = 0; i < node.getSample().length; i++) {
+				for(int j = 0; j < node.getSample()[i].getPatients().length; j++) {
+					Patient patient = node.getSample()[i].getPatients()[j];
+					for (int k = 0; k < patient.getPatientFeatures().length; k++) {
+						String featureName = patient.getPatientFeatures()[k].getFeatureName();
+						String splitFeatureName = node.getSplitFeature().getFeatureName();
+							if(featureName.equals(splitFeatureName) && !node.getSplitFeature().isFeatureUsed()) {
+								Feature patientFeature = patient.getPatientFeatures()[k];
+								if((Double)patient.getPatientFeatures()[k].getFeatureValue() <= node.getSplitValue()) {
+									treePrediction = makePrediction(node.getLeft());
+								} else {
+									treePrediction = makePrediction(node.getRight());
+							}
+							patientFeature.setIsFeatureUsed(true); 	
+						}
+					}
+				}
+			}
+			return treePrediction;
+		}
 	}
 	
-	public Double[] getPregnanciesFeatures() {
-		return pregnanciesFeatures;
-	}
-	
-	public void setPregnanciesFeatures(Double[] patientPregnanciesFeatures) {
-		this.pregnanciesFeatures = patientPregnanciesFeatures;
-	}
-	
-	
-	public Double[] getBloodPressureFeatures() {
-		return bloodPressureFeatures;
-	}
-	
-	public void setBloodPressureFeatures(Double[] patientBloodPressureFeature) {
-		this.bloodPressureFeatures = patientBloodPressureFeature;
-	}
-	
-	
-	public Double[] getskinThicknessFeatures() {
-		return skinThicknessFeatures;
-	}
-	
-	public void setskinThicknessFeatures(Double[] patientskinThickness) {
-		this.skinThicknessFeatures = patientskinThickness;
-	}
-	
-	
-	public Double[] getInsulinFeatures() {
-		return insulinFeatures;
-	}
-	
-	public void setInsulinFeatures(Double[] patientInsulinFeature) {
-		this.insulinFeatures = patientInsulinFeature;
-	}
-	
-	
-	public Double[] getBMIFeatures() {
-		return bmiFeatures;
-	}
-	
-	public void setBMIFeatures(Double[] patientBMIFeature) {
-		this.bmiFeatures = patientBMIFeature;
-	}
-	
-	
-	public Double[] getDiabetesPedigreeFunctionFeatures() {
-		return diabetesPedigreeFunctionFeatures;
-	}
-	
-	public void setDiabetesPedigreeFunctionFeatures(Double[] patientDiabetesPedigreeFunctionFeature) {
-		this.diabetesPedigreeFunctionFeatures = patientDiabetesPedigreeFunctionFeature;
-	}
-	
-	
-	public Integer[] getAgeFeatures() {
-		return ageFeatures;
-	}
-	
-	public void setAgeFeatures(Integer[] patientAgeFeatures) {
-		this.ageFeatures = patientAgeFeatures;
-	}
-	
-	public Double[] getGlucoseFeatures() {
-		return glucoseFeatures;
-	}
-	
-	public void setGlucoseFeatures(Double[] patientGlucoseFeatures) {
-		this.glucoseFeatures = patientGlucoseFeatures;
-	}
-	
-	
-	public Double[] getOutcomeFeatures() {
-		return outcomeFeatures;
-	}
-	
-	public void setOutcomeFeatures(Double[] patientOutcomes) {
-		this.outcomeFeatures = patientOutcomes;
+	@Override
+	public TreeNode createNode(Sample[] sample) {
+		return new TreeNode(sample);
 	}
 }

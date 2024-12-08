@@ -4,12 +4,19 @@ import java.util.*;
 
 public class Sample {
 	
-	private Patient[] sample;
+	private Patient[] patients;
+	private int sampleID;
+	private static int newSampleID = 1; 
 	private int sampleIndex;
 	
-	public Sample() {
-		sample = new Patient[Home.getPatientCount()];
+	public Sample(int sampleSize) {
+		patients = new Patient[sampleSize];
 		sampleIndex = 0;
+		this.sampleID = newSampleID++; //Fix
+	}
+	
+	public Integer getSampleId() {
+		return sampleID;
 	}
 	
 	public Patient chooseRandomPatient(Patient[] sample) {
@@ -18,16 +25,13 @@ public class Sample {
 		return randomPatient;
 	}
 	
-	
-	public void addToSample(Patient patient) {
-		if(sampleIndex < sample.length) {
-			sample[sampleIndex++] = patient;
-		} else {
-			System.out.println("Sample is full");
-		}		
+	public void addToPatientSample(Patient patient) {
+		if(sampleIndex < patients.length) {
+			patients[sampleIndex++] = patient;
+		} 
 	}
 	
-	public Patient[] getSample() {
-		return sample;
+	public Patient[] getPatients() {
+		return patients;
 	}
 }

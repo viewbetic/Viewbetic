@@ -9,50 +9,36 @@ import java.io.FileWriter;
 public class Home {
 	
 	public Patient[] readFile(BufferedReader dataFile, int patientCount) throws IOException {
+		existingPatients = new Patient[patientCount]; //Fix
 		
-		existingPatients = new Patient[patientCount];
 		int patientIndex = 0;
 		
-		String featureLine = dataFile.readLine(); //features
-		features = featureLine.split("\t");
+		String featureLine = dataFile.readLine(); //Features
 		
-		setPatientIDFeatureName(features[0]);
-		setPregnanciesFeatureName(features[1]);
-		setGlucoseFeatureName(features[2]);
-		setBloodPressureFeatureName(features[3]);
-		setSkinThicknessFeatureName(features[4]);
-		setInsulinFeatureName(features[5]);
-		setBMIFeatureName(features[6]);
-		setDiabetesPedigreeFunctionFeatureName(features[7]);
-		setAgeFeatureName(features[8]);
-		setOutcomeFeatureName(features[9]);
+		featureNames = featureLine.split("\t");
+
+		int featureCount = featureNames.length-1;
+		
+		//String id = featureNames[0]; //ID name
 		
 		String patientLine;
-
-		while ((patientLine = dataFile.readLine()) != null) { //patients
+		
+		while ((patientLine = dataFile.readLine()) != null) { //Existing patients
 			String[] data = patientLine.split("\t");
 			Integer patientID = Integer.parseInt(data[0]);
-			Double pregnancies = Double.parseDouble(data[1]);
-			Double glucose = Double.parseDouble(data[2]);
-			Double bloodPressure = Double.parseDouble(data[3]);
-			Double skinThickness = Double.parseDouble(data[4]);
-			Double insulin = Double.parseDouble(data[5]);
-			Double bmi = Double.parseDouble(data[6]);
-			Double diabetesPedigreeFunction = Double.parseDouble(data[7]);
-			Integer age = Integer.parseInt(data[8]);
-			Double outcome = Double.parseDouble(data[9]);
+			
+			patientFeatures = new Feature[featureCount];
+			
+			for (int i = 0; i < featureCount; i++) {
+				patientFeatures[i] = store.createFeatureFromName(featureNames[i+1]);
+				double value = Double.parseDouble(data[i+1]);
+				patientFeatures[i].setFeatureValue(value);
+			}
+			
 			Patient p = new Patient(patientID, 
 									patientFirstName, 
 									patientLastame, 
-									pregnancies,
-									glucose, 
-									bloodPressure, 
-									skinThickness, 
-									insulin, 
-									bmi,
-									diabetesPedigreeFunction, 
-									age, 
-									outcome);
+									patientFeatures);
 
 			existingPatients[patientIndex++] = p;
 		}
@@ -60,10 +46,11 @@ public class Home {
 		return existingPatients;
 	}
 
-	private int isFileEmpty(BufferedReader dataFile) throws IOException {
+	private int getExistingPatientCount(BufferedReader dataFile) throws IOException {
+		patientCount = 0;
 		String line;
 		if((line = dataFile.readLine()) == null){
-			throw new IOException("File is empty");
+			throw new IOException("File is empty. Cannot use: " + line);
 		} else {
 			while ((line = dataFile.readLine()) != null) {
 				patientCount++;
@@ -72,187 +59,105 @@ public class Home {
 		return patientCount;
 	}
 	
+	public void createPredictionForPatient(String patientFirstName, 
+											String patientLastame, 
+											String pregnancies, 
+											String glucose, 
+											String bloodPressure,
+											String skinThickness,
+											String insulin,
+											String bmi,
+											String diabetesPedigreeFunction,
+											String age,
+											String outcome) {
+		
+		if (patientFirstName == null && 
+			patientLastame == null && 
+			pregnancies == null && 
+			glucose == null &&  
+			bloodPressure == null &&
+			skinThickness == null &&
+            insulin == null &&
+			bmi == null &&
+			diabetesPedigreeFunction == null &&
+		    age == null &&
+			outcome == null) {
+			
+			viewbeticUI.setPredictionMessage("Please enter information");
+		} else {
+			
+			Feature[] newPatientFeatures = store.createPatientFeatures();
+			newPatientFeatures[0].setFeatureValue(Double.parseDouble(pregnancies));
+			newPatientFeatures[1].setFeatureValue(Double.parseDouble(glucose));
+			newPatientFeatures[2].setFeatureValue(Double.parseDouble(bloodPressure));
+			newPatientFeatures[3].setFeatureValue(Double.parseDouble(skinThickness));
+			newPatientFeatures[4].setFeatureValue(Double.parseDouble(insulin));
+			newPatientFeatures[5].setFeatureValue(Double.parseDouble(bmi));
+			newPatientFeatures[6].setFeatureValue(Double.parseDouble(diabetesPedigreeFunction));
+			newPatientFeatures[7].setFeatureValue(Integer.parseInt(age));
+			newPatientFeatures[8].setFeatureValue(0); //New patient does not have diagnosis
+			
+			//Fix - Patient should be added to existing patients
+			//After prediction and isFeatureUsed is updated
+			Patient newPatient = new Patient(0, patientFirstName, patientLastame, newPatientFeatures);
+			Sample[] newPatientSample = new Sample[1];
+			newPatientSample[0] = new Sample(1);
+			newPatientSample[0].addToPatientSample(newPatient);
+			
+			TreeNode node = new TreeNode(newPatientSample);
+			
+			boolean prediction = forest.makeVote(node);
+			
+			if (prediction == false) {
+				viewbeticUI.setPredictionMessage("Condition: Patient is not Diabetic");
+			} else {
+				viewbeticUI.setPredictionMessage("Condition: Patient is Diabetic");
+			} 
+		}
+	}
+
+	public void createFeedbackForPatient() {
+		//Compare entered data to an average patient
+	}
+	
 	public static void main(String[] args) throws IOException{
 		
 		BufferedReader dataFile = new BufferedReader(new FileReader(args[0]));
 		BufferedWriter logFile = new BufferedWriter(new FileWriter(args[1]));
 		
-		Home h = new Home();
+		Home home = new Home();
 		
 		//Get the number of patients in the file
 		//If the file is empty, exit the program
-		patientCount = h.isFileEmpty(dataFile);
+		patientCount = home.getExistingPatientCount(dataFile);
 		if(patientCount == 0) {logFile.close(); System.exit(0); }
 		dataFile.close();
 		
 		dataFile = new BufferedReader(new FileReader(args[0]));
 		
 		//Read all existing patients from file
-		patientList = h.readFile(dataFile, patientCount);
-		
-		//Create samples from existing patients
-		Sample s;
-		
-		Clean c = new Clean();
-		
-		TreeNode t;
-		
-		DecisionTree tree = new DecisionTree();
-		
-		int testSize = 10;
-		int sampleNumber = 0;
-		Patient[][] cleanRandomSample = new Patient[testSize][];	
-		
-		for(int i = 0; i < testSize; i++) { //test 10 samples
-			sampleNumber++;
-			s = new Sample(); 
-			
-			for(int j = 0; j < patientCount; j++) {
-				Patient sampledPatient = s.chooseRandomPatient(patientList);
-				s.addToSample(sampledPatient);
-				//logFile.write("Sample patient add complete. ID is: " + sampledPatient.getId() + "\n");
-				
-			}
-			
-			Patient[] randomSample = s.getSample();
-			
-			//for(int k = 0; k < randomSample.length; k++) {
-				//logFile.write("Random sample ID is: " + randomSample[k].getId() + "\n");
-			//}
-			
-			c.cleanSample(randomSample);
+		patients = home.readFile(dataFile, patientCount);
 
-		//}
-
-			//for(int m = 0; m < testSize; m++) { //test length with only 10 patients 
-				cleanRandomSample[i] = randomSample;
-				logFile.write("New clean sample. Sample number is:" + sampleNumber + "\n");
-				
-			//}
-			//logFile.write("Second clean sample patient is: "+ cleanRandomSample[1][j].getId()+ "\n");
-		}
+		viewbeticUI.setMessage("Creating the Random Forest...");
+		forest = new RandomForest(patientCount, patientCount); 
+		forest.createForest(patients); 
 		
-		for(int n = 0; n < testSize; n++) { //test length with only 10 patients 
-			//logFile.write("First clean sample patient is: "+ cleanRandomSample[0][n].getId()+ "\n");
-		}
-		for(int p = 0; p < testSize; p++) { //test length with only 10 patients 
-			//logFile.write("Second clean sample patient is: "+ cleanRandomSample[1][p].getId()+ "\n");
-		}
-		
-		t = new TreeNode(cleanRandomSample);
-		//tree.getFeature(t);
-		tree.findSplitValue(t);
-		
-		/**
-		for(int i = 0; i < tree.getAgeFeatures().length; i++) {
-			logFile.write("Ages: " + tree.getAgeFeatures()[i].doubleValue() + "\n");
-			logFile.write("New Feature" + "\n");
-		}
-		**/
-		
-		//tree.createTree(t);
-		
-		//tree.addCleanSample(cleanRandomSample);
+		viewbeticUI.setMessage("Ready to make prediction"); 
 		
 		logFile.close();
 	}
 	
-	public static int getPatientCount() {
-		return patientCount;
-	}
-	
-	private String getPatientIDFeatureName() {
-		return patientIDFeatureName;	
-	}
-	
-	private void setPatientIDFeatureName(String patientIDFeatureName) {
-		this.patientIDFeatureName = patientIDFeatureName;
-	}
-	
-	private String setPregnanciesFeatureName() {
-		return pregnanciesFeatureName;
-	}
-	
-	private void setPregnanciesFeatureName(String pregnanciesFeatureName) {
-		this.pregnanciesFeatureName = pregnanciesFeatureName;
-	}
-	
-	private String getBloodPressureFeatureName() {
-		return bloodPressureFeatureName;
-	}
-	
-	private void setBloodPressureFeatureName(String bloodPressureFeatureName) {
-		this.bloodPressureFeatureName = bloodPressureFeatureName;
-	}
-	
-	private String getGlucoseFeatureName() {
-		return glucoseFeatureName;
-	}
-	
-	private void setGlucoseFeatureName(String glucoseFeatureName) {
-		this.glucoseFeatureName = glucoseFeatureName;
-	}
-	
-	private String getSkinThicknessFeatureName() {
-		return skinThicknessFeatureName;
-	}
-	
-	private void setSkinThicknessFeatureName(String skinThicknessFeatureName) {
-		this.skinThicknessFeatureName = skinThicknessFeatureName;
-	}
-	
-	private String getInsulinFeatureName() {
-		return insulinFeatureName;
-	}
-	
-	private void setInsulinFeatureName(String insulinFeatureName) {
-		this.insulinFeatureName = insulinFeatureName;
-	}
-	
-	private String getBMIFeatureName() {
-		return bmiFeatureName;
-	}
-	
-	private void setBMIFeatureName(String bmiFeatureName) {
-		this.bmiFeatureName = bmiFeatureName;
-	}
-	
-	private String getDiabetesPedigreeFunctionFeatureName() {
-		return diabetesPedigreeFunctionFeatureName;
-	}
-	
-	private void setDiabetesPedigreeFunctionFeatureName(String diabetesPedigreeFunctionFeatureName) {
-		this.diabetesPedigreeFunctionFeatureName = diabetesPedigreeFunctionFeatureName;
-	}
-	private String getOutcomeFeatureName() {
-		return outcomeFeatureName;
-	}
-	private void setOutcomeFeatureName(String outcomeFeatureName) {
-		this.outcomeFeatureName = outcomeFeatureName;
-	}
-	private void setAgeFeatureName(String ageFeatureName) {
-		this.ageFeatureName = ageFeatureName;
-	}
-	private String getAgeFeatureName() {
-		return ageFeatureName;
-	}
-	
-	public static String[] featuresList;
-	public static String[] features;
+	private static final ViewbeticUI viewbeticUI = ViewbeticUI.createUI(new Home());
+	static RandomForest forest;
+	static FeatureStore store = new FeatureStore();
+	//public static Feature[] features;
+	public static String[] featureNames;
 	static Patient[] existingPatients; 
-	static Patient[] patientList;
+	static Patient[] newPatients;
+	static Patient[] patients;
 	public static int patientCount;
-	public static String patientFirstName;
-	public static String patientLastame;
-	public String patientIDFeatureName;
-	public String pregnanciesFeatureName;
-	public String glucoseFeatureName;
-	public String bloodPressureFeatureName;
-	public String skinThicknessFeatureName;
-	public String insulinFeatureName;
-	public String bmiFeatureName;
-	public String diabetesPedigreeFunctionFeatureName;
-	public String ageFeatureName;
-	public String outcomeFeatureName;
-	
+	public static int featureCount;
+	Feature[] patientFeatures;
+	public String patientFirstName;
+	public String patientLastame;
 }
