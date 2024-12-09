@@ -1,15 +1,15 @@
 package home;
 
+import java.util.Random;
+
 public class RandomForest {
 
 	private int treeCount;
-	private int sampleSize;
 	DecisionTree[] forest;
 	SampleCleaner cleaner;
 	
-	public RandomForest(int treeCount, int sampleSize) {
+	public RandomForest(int treeCount) {
 		this.treeCount = treeCount;
-		this.sampleSize = sampleSize;
 		forest = new DecisionTree[treeCount];
 		cleaner = new SampleCleaner();
 	}
@@ -34,26 +34,27 @@ public class RandomForest {
 		return false;
 	}
 	
-	public void createForest(Patient[] patients) { //Fix
+	public void createForest(Sample[] cleanSamples) { 
 		for(int i = 0; i < treeCount; i++) {
 			
-			Sample[] cleanSamples = new Sample[sampleSize];
-			for(int j = 0; j < sampleSize; j++) { 
-				Sample randomSample = new Sample(patients.length);
-				
-				for(int k = 0; k < sampleSize; k++) { 
-					Patient sampledPatient = randomSample.chooseRandomPatient(patients);
-					randomSample.addToPatientSample(sampledPatient);
-				}
-				
-				cleanSamples[j] = cleaner.createCleanSample(randomSample);
+			Sample[] nodeSample = new Sample[cleanSamples.length];
+			
+			for(int j = 0; j < cleanSamples.length; j++) { 
+				Sample randomSample = chooseRandomSample(cleanSamples);
+				nodeSample[j] = randomSample;
 			}
-			TreeNode t = new TreeNode(cleanSamples);
+			TreeNode t = new TreeNode(nodeSample);
 				
 			DecisionTree tree = new DecisionTree();
 			tree.createTree(t);
 				
 			forest[i] = tree;	
 		}
+	}
+	
+	public Sample chooseRandomSample(Sample[] sample) {
+		int randomIndex = new Random().nextInt(sample.length);
+		Sample randomSample = sample[randomIndex];
+		return randomSample;
 	}
 }

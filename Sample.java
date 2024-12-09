@@ -1,7 +1,5 @@
 package home;
 
-import java.util.*;
-
 public class Sample {
 	
 	private Patient[] patients;
@@ -17,12 +15,6 @@ public class Sample {
 	
 	public Integer getSampleId() {
 		return sampleID;
-	}
-	
-	public Patient chooseRandomPatient(Patient[] sample) {
-		int randomIndex = new Random().nextInt(sample.length);
-		Patient randomPatient = sample[randomIndex];
-		return randomPatient;
 	}
 	
 	public void addToPatientSample(Patient patient) {

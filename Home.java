@@ -1,6 +1,7 @@
 package home;
 
 import java.io.IOException;
+import java.util.Random;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -116,8 +117,32 @@ public class Home {
 		}
 	}
 
-	public void createFeedbackForPatient() {
-		//Compare entered data to an average patient
+	public void createFeedbackForPatient(String newPatientFirstName,
+										 String newPatientLastName) {
+		if (newPatientFirstName == null || newPatientLastName == null) {
+				viewbeticUI.setPredictionMessage("Please enter information");
+		} else {
+			boolean patientLocated = false;
+			for(int i = 0; i < patients.length && !patientLocated; i++) {
+				if(newPatientFirstName.equals(patients[i].getFirstName()) && 
+				   newPatientLastName.equals(patients[i].getLastName())) {
+					Patient newPatient = patients[i];
+					patientLocated = true;
+					for(int j = 0; j < newPatient.getPatientFeatures().length; j++) {
+						Feature patientFeature = newPatient.getPatientFeatures()[j];
+						if((Double)patientFeature.getFeatureAverage() > (Double)patientFeature.getFeatureValue()) {
+							viewbeticUI.setFeedbackMessage("It is recommended that " + newPatientFirstName + " " + 
+			 						newPatientLastName + "raises their " + 
+			 						newPatient.getPatientFeatures()[j].getFeatureName()); 
+						}else {
+							 viewbeticUI.setFeedbackMessage("It is recommended that " + newPatientFirstName + " " + 
+				 						newPatientLastName +"lowers their " +
+				 						newPatient.getPatientFeatures()[j].getFeatureName()); 
+						} 
+					}
+				} 
+			}
+		 }
 	}
 	
 	public static void main(String[] args) throws IOException{
@@ -138,9 +163,25 @@ public class Home {
 		//Read all existing patients from file
 		patients = home.readFile(dataFile, patientCount);
 
+		//Clean samples
+		Sample[] cleanSamples = new Sample[patientCount];
+		for(int j = 0; j < patientCount; j++) {
+			Sample patientSample = new Sample(patientCount);
+			for(int k = 0; k < patientCount; k++) {
+				int randomIndex = new Random().nextInt(patientCount);
+				Patient randomPatient = patients[randomIndex];
+				//Patient sampledPatient = patientSample.chooseRandomPatient(patients);
+				patientSample.addToPatientSample(randomPatient);
+			}
+			
+			cleanSamples[j] = cleaner.createCleanSample(patientSample);
+		}
+		
+		//Add averages to patients
+		
 		viewbeticUI.setMessage("Creating the Random Forest...");
-		forest = new RandomForest(patientCount, patientCount); 
-		forest.createForest(patients); 
+		forest = new RandomForest(patientCount); 
+		forest.createForest(cleanSamples); 
 		
 		viewbeticUI.setMessage("Ready to make prediction"); 
 		
@@ -150,6 +191,7 @@ public class Home {
 	private static final ViewbeticUI viewbeticUI = ViewbeticUI.createUI(new Home());
 	static RandomForest forest;
 	static FeatureStore store = new FeatureStore();
+	private static SampleCleaner cleaner;
 	//public static Feature[] features;
 	public static String[] featureNames;
 	static Patient[] existingPatients; 

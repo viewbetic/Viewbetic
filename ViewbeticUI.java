@@ -206,24 +206,25 @@ public class ViewbeticUI {
 		  public void actionPerformed(ActionEvent e) {
 			  outputArea.append("Does the patient have diabetes?" + "\n");
 			  home.createPredictionForPatient(getFirstNameText(), 
-						  getLastNameText(),
-						  getPregnanciesText(), 
-						  getGlucoseText(), 
-						  getBloodPressureText(),
-						  getSkinThicknessText(), 
-						  getInsulinText(), 
-						  getBMIText(), 
-						  getDPFText(),
-						  getAgeText(), 
-						  "0");
+											  getLastNameText(),
+											  getPregnanciesText(), 
+											  getGlucoseText(), 
+											  getBloodPressureText(),
+											  getSkinThicknessText(), 
+											  getInsulinText(), 
+											  getBMIText(), 
+											  getDPFText(),
+											  getAgeText(), 
+											  "0");
 		  }
 		});
 		
 		feedbackButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				outputArea.append("Advice is: ");
-				ViewbeticUI.home.createFeedbackForPatient();
+				outputArea.append("Advice is: " + "\n");
+				ViewbeticUI.home.createFeedbackForPatient(getFirstNameText(), 
+						  								  getLastNameText());
 			}
 		});			  
 	}
