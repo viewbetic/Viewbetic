@@ -36,7 +36,7 @@ public class AgeFeature implements Feature {
 	
 	@Override
 	public void setFeatureName(String featureName) {
-		ageFeatureName = featureName;
+		this.ageFeatureName = featureName;
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class AgeFeature implements Feature {
 	
 	@Override
 	public void setFeatureAverage(Double featureAverage) {
-		ageFeatureAverage = featureAverage;
+		this.ageFeatureAverage = featureAverage;
 	}
 	
 	@Override
@@ -56,7 +56,7 @@ public class AgeFeature implements Feature {
 	
 	@Override
 	public void setFeatureValue(Integer featureValue) {
-		this.age = featureValue;
+		this.age = featureValue;	
 	}
 	
 	@Override
@@ -81,5 +81,10 @@ public class AgeFeature implements Feature {
 	
 	public void setIsFeatureUsed(boolean isFeatureUsed) {
 		this.isFeatureUsed = isFeatureUsed;
+	}
+
+	@Override
+	public void setFeatureValueToNull() { 
+		this.age = 0; 
 	}
 }

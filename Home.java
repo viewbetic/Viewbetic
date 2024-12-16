@@ -1,28 +1,37 @@
 package home;
 
 import java.io.IOException;
-import java.util.Random;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileReader;
-import java.io.FileWriter;
 
 public class Home {
 	
-	public Patient[] readFile(BufferedReader dataFile, int patientCount) throws IOException {
-		existingPatients = new Patient[patientCount]; //Fix
+	public Home() {
 		
-		int patientIndex = 0;
+	}
+	
+	public void readFile(String pathToFile) throws IOException {
+
+		BufferedReader dataFile = new BufferedReader(new FileReader(pathToFile));
+		patientCount = getExistingPatientCountFromFile(dataFile);
+		existingPatients = new Patient[patientCount];
+		
+		dataFile.close();
+		dataFile = new BufferedReader(new FileReader(pathToFile));
 		
 		String featureLine = dataFile.readLine(); //Features
-		
 		featureNames = featureLine.split("\t");
 
 		int featureCount = featureNames.length-1;
 		
-		//String id = featureNames[0]; //ID name
+		//String id = featureNames[0]; //ID
 		
 		String patientLine;
+		String firstName = "FirstName";
+		String lastName = "LastName";
+		
+		int endOfirstName = 0;
+		int endOfLastName = 0;
 		
 		while ((patientLine = dataFile.readLine()) != null) { //Existing patients
 			String[] data = patientLine.split("\t");
@@ -32,22 +41,109 @@ public class Home {
 			
 			for (int i = 0; i < featureCount; i++) {
 				patientFeatures[i] = store.createFeatureFromName(featureNames[i+1]);
-				double value = Double.parseDouble(data[i+1]);
-				patientFeatures[i].setFeatureValue(value);
+				
+				if(data[i+1].isEmpty()) {
+					patientFeatures[i].setFeatureValueToNull();
+				} else {
+					double value = Double.parseDouble(data[i+1]);
+					patientFeatures[i].setFeatureValue(value);
+				}
 			}
 			
-			Patient p = new Patient(patientID, 
+			String patientFirstName = firstName + "-" + endOfirstName;
+			String patientLastName = lastName + "-" + endOfLastName;
+			
+			//System.out.println("The existing patients first name is: " + patientFirstName);
+			//System.out.println("The existing patients last name is: " + patientLastName);
+			
+			Patient newPatient = createNewPatient(patientID, 
 									patientFirstName, 
-									patientLastame, 
+									patientLastName, 
 									patientFeatures);
-
-			existingPatients[patientIndex++] = p;
+			endOfirstName++;
+			endOfLastName++;
+			//System.out.println("Created Patient: " + newPatient.getFirstName() + " " + patientLastName);
+			addPatientToExistingPatients(newPatient);
 		}
 		
-		return existingPatients;
+		for (int i = 0; i < existingPatients.length; i++) {
+			System.out.println("Existing patients are:" + existingPatients[i].getFirstName());
+			for (int j = 0; j < existingPatients[i].getPatientFeatures().length; j++) {
+				//System.out.println(existingPatients[i].getFirstName() + " feature values are:" + existingPatients[i].getPatientFeatures()[j].getFeatureValue());
+			}
+		}
+		
+		dataFile.close();
 	}
 
-	private int getExistingPatientCount(BufferedReader dataFile) throws IOException {
+	public Patient createNewPatient(int patientID, 
+									String patientFirstName, 
+									String patientLastame, 
+									Feature[] patientFeatures) {
+		return new Patient(patientID, 
+							patientFirstName, 
+							patientLastame, 
+							patientFeatures);
+	}
+	
+	public Patient[] getExistingPatients() {
+		return existingPatients;
+	}
+	
+	public void addPatientToExistingPatients(Patient newPatient) { 
+		if(isExistingPatientsFull(existingPatients)) {
+				existingPatients = addNewPatient(existingPatients);
+		}
+		
+		if(!isPatientAdded(newPatient)) {
+			boolean patientAdded = false;
+			for(int i = 0; i < existingPatients.length; i++) {
+				if(existingPatients[i] == null && !patientAdded) {
+					existingPatients[i] = newPatient;
+					patientAdded = true;
+				} 
+			}
+			if(!patientAdded) {
+				System.out.println("Could not add new patient:" + newPatient.getFirstName() + " " + newPatient.getLastName()); 
+			}else {
+				System.out.println("Patient already added in system: " + newPatient.getFirstName()  + " " + newPatient.getLastName()); 
+			}
+		}
+	}
+	
+	public Patient[] addNewPatient(Patient[] patients) { 
+		int newSize = patients.length + 100;
+		newPatients = new Patient[newSize];
+		
+		
+		for(int i = 0; i < patients.length; i++) {
+				newPatients[i] = patients[i];	
+		}
+		return newPatients;
+	}
+	
+	public boolean isPatientAdded(Patient patient) { //Fix - Use ID?
+		
+		for(int i = 0; i < existingPatients.length; i++) {
+			if(existingPatients[i] != null &&
+				existingPatients[i].getFirstName().equals(patient.getFirstName()) && 
+				existingPatients[i].getLastName() == patient.getLastName()) {
+				return true;
+			}
+		}
+		return false;		
+	}
+	
+	public boolean isExistingPatientsFull(Patient[] patients) { 
+		for(int i = 0; i < patients.length; i++) {
+			if(patients[i] == null) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static int getExistingPatientCountFromFile(BufferedReader dataFile) throws IOException {
 		patientCount = 0;
 		String line;
 		if((line = dataFile.readLine()) == null){
@@ -61,7 +157,7 @@ public class Home {
 	}
 	
 	public void createPredictionForPatient(String patientFirstName, 
-											String patientLastame, 
+											String patientLastName, 
 											String pregnancies, 
 											String glucose, 
 											String bloodPressure,
@@ -73,7 +169,7 @@ public class Home {
 											String outcome) {
 		
 		if (patientFirstName == null && 
-			patientLastame == null && 
+			patientLastName == null && 
 			pregnancies == null && 
 			glucose == null &&  
 			bloodPressure == null &&
@@ -86,8 +182,22 @@ public class Home {
 			
 			viewbeticUI.setPredictionMessage("Please enter information");
 		} else {
-			
 			Feature[] newPatientFeatures = store.createPatientFeatures();
+			
+			
+			//Test - remove after finished
+			/*
+			newPatientFeatures[0].setFeatureValue(0);
+			newPatientFeatures[1].setFeatureValue(137);
+			newPatientFeatures[2].setFeatureValue(40);
+			newPatientFeatures[3].setFeatureValue(35);
+			newPatientFeatures[4].setFeatureValue(168);
+			newPatientFeatures[5].setFeatureValue(43.1);
+			newPatientFeatures[6].setFeatureValue(2.288);
+			newPatientFeatures[7].setFeatureValue(33);
+			newPatientFeatures[8].setFeatureValue(0);
+			*/
+			
 			newPatientFeatures[0].setFeatureValue(Double.parseDouble(pregnancies));
 			newPatientFeatures[1].setFeatureValue(Double.parseDouble(glucose));
 			newPatientFeatures[2].setFeatureValue(Double.parseDouble(bloodPressure));
@@ -98,107 +208,116 @@ public class Home {
 			newPatientFeatures[7].setFeatureValue(Integer.parseInt(age));
 			newPatientFeatures[8].setFeatureValue(0); //New patient does not have diagnosis
 			
-			//Fix - Patient should be added to existing patients
-			//After prediction and isFeatureUsed is updated
-			Patient newPatient = new Patient(0, patientFirstName, patientLastame, newPatientFeatures);
-			Sample[] newPatientSample = new Sample[1];
-			newPatientSample[0] = new Sample(1);
+			Patient newPatient = new Patient(0, /*"TesterF"*/patientFirstName, /*"TesterL"*/patientLastName, newPatientFeatures);
+			addPatientToExistingPatients(newPatient);
+			Sample[] newPatientSample = {Sample.getSample(1)};
 			newPatientSample[0].addToPatientSample(newPatient);
 			
 			TreeNode node = new TreeNode(newPatientSample);
 			
 			boolean prediction = forest.makeVote(node);
 			
-			if (prediction == false) {
-				viewbeticUI.setPredictionMessage("Condition: Patient is not Diabetic");
-			} else {
+			if (prediction) {
+				newPatientFeatures[8].setFeatureValue(1);
 				viewbeticUI.setPredictionMessage("Condition: Patient is Diabetic");
-			} 
+			} else {
+				newPatientFeatures[8].setFeatureValue(0);
+				viewbeticUI.setPredictionMessage("Condition: Patient is not Diabetic");
+			}
+			
+			lastPatient = newPatient;
+			//System.out.println("Last Patient is: " + lastPatient.getFirstName() + " " + lastPatient.getLastName());
 		}
 	}
 
-	public void createFeedbackForPatient(String newPatientFirstName,
-										 String newPatientLastName) {
-		if (newPatientFirstName == null || newPatientLastName == null) {
-				viewbeticUI.setPredictionMessage("Please enter information");
-		} else {
-			boolean patientLocated = false;
-			for(int i = 0; i < patients.length && !patientLocated; i++) {
-				if(newPatientFirstName.equals(patients[i].getFirstName()) && 
-				   newPatientLastName.equals(patients[i].getLastName())) {
-					Patient newPatient = patients[i];
-					patientLocated = true;
-					for(int j = 0; j < newPatient.getPatientFeatures().length; j++) {
-						Feature patientFeature = newPatient.getPatientFeatures()[j];
-						if((Double)patientFeature.getFeatureAverage() > (Double)patientFeature.getFeatureValue()) {
-							viewbeticUI.setFeedbackMessage("It is recommended that " + newPatientFirstName + " " + 
-			 						newPatientLastName + "raises their " + 
-			 						newPatient.getPatientFeatures()[j].getFeatureName()); 
-						}else {
-							 viewbeticUI.setFeedbackMessage("It is recommended that " + newPatientFirstName + " " + 
-				 						newPatientLastName +"lowers their " +
-				 						newPatient.getPatientFeatures()[j].getFeatureName()); 
+	public void createFeedbackForPatient() {
+		if (lastPatient != null) { 
+				String feedback = "Feedback for " + lastPatient.getFirstName() + " " + lastPatient.getLastName() + ":\n";
+				
+				for(int j = 0; j < lastPatient.getPatientFeatures().length; j++) {
+					Feature patientFeature = lastPatient.getPatientFeatures()[j];
+					
+					if(!patientFeature.getFeatureName().equals("Pregnancies") &&
+					   !patientFeature.getFeatureName().equals("Age") &&
+					   !patientFeature.getFeatureName().equals("Outcome")) {
+						Double averageValue = patientFeature.getFeatureAverage().doubleValue();
+						Double featureValue = patientFeature.getFeatureValue().doubleValue();
+						
+						if(averageValue > featureValue) {
+							if (patientFeature.getFeatureName().equals("Glucose")) { 
+								feedback += "It is recommended that " + lastPatient.getFirstName() + " " + lastPatient.getLastName() + " focus on blood sugar control \n"; 
+							} else if (patientFeature.getFeatureName().equals("BloodPressure")) { 
+								feedback += "It is recommended that " + lastPatient.getFirstName() + " " + lastPatient.getLastName() + " reduce their salt consumption \n"; 
+							} else if (patientFeature.getFeatureName().equals("SkinThickness")) { 
+								feedback += "It is recommended that " + lastPatient.getFirstName() + " " + lastPatient.getLastName() + " start a good skin health routine\n"; 
+							} else if (patientFeature.getFeatureName().equals("Insulin")) { 
+								feedback += "It is recommended that " + lastPatient.getFirstName() + " " + lastPatient.getLastName() + " check with their doctor for insulin \n"; 
+							} else if (patientFeature.getFeatureName().equals("BMI")) { 
+								feedback += "It is recommended that " + lastPatient.getFirstName() + " " + lastPatient.getLastName() + " start a balanced diet and regular physical activity \n"; 
+							} else if (patientFeature.getFeatureName().equals("DiabetesPedigreeFunction")) 
+								feedback += "It is recommended that " + lastPatient.getFirstName() + " " + lastPatient.getLastName() + " get check-ups for early diabetes detection \n"; 
+						} else { 
+							feedback += "It is recommended that " + lastPatient.getFirstName() + " " + lastPatient.getLastName() + " continue to check their " + patientFeature.getFeatureName() + " with a doctor.\n"; 
 						} 
 					}
-				} 
-			}
-		 }
+				}
+			viewbeticUI.setPredictionMessage(feedback);
+		} else {
+				viewbeticUI.setPredictionMessage("Patient not found");
+		}
 	}
 	
 	public static void main(String[] args) throws IOException{
 		
-		BufferedReader dataFile = new BufferedReader(new FileReader(args[0]));
-		BufferedWriter logFile = new BufferedWriter(new FileWriter(args[1]));
-		
 		Home home = new Home();
+		viewbeticUI.setMessage("Reading file...");
+		home.readFile(args[0]);
 		
-		//Get the number of patients in the file
-		//If the file is empty, exit the program
-		patientCount = home.getExistingPatientCount(dataFile);
-		if(patientCount == 0) {logFile.close(); System.exit(0); }
-		dataFile.close();
+		if(patientCount == 0) {System.exit(0);}
+		//Add file check
 		
-		dataFile = new BufferedReader(new FileReader(args[0]));
+		viewbeticUI.setMessage("Patient count is: " + patientCount);
 		
-		//Read all existing patients from file
-		patients = home.readFile(dataFile, patientCount);
-
-		//Clean samples
+		viewbeticUI.setMessage("Cleaning samples...");
 		Sample[] cleanSamples = new Sample[patientCount];
-		for(int j = 0; j < patientCount; j++) {
-			Sample patientSample = new Sample(patientCount);
-			for(int k = 0; k < patientCount; k++) {
-				int randomIndex = new Random().nextInt(patientCount);
-				Patient randomPatient = patients[randomIndex];
-				//Patient sampledPatient = patientSample.chooseRandomPatient(patients);
-				patientSample.addToPatientSample(randomPatient);
-			}
+		for(int i = 0; i < patientCount; i++) {
+			Sample patientSample = Sample.getSample(patientCount);
 			
-			cleanSamples[j] = cleaner.createCleanSample(patientSample);
+			for(int j = 0; j < patientCount; j++) {
+				Patient patient = existingPatients[j];
+				patientSample.addToPatientSample(patient);
+			}
+			cleanSamples[i] = cleaner.createCleanSample(patientSample);
 		}
 		
-		//Add averages to patients
+		viewbeticUI.setMessage("Adding averages...");
+		for (int k = 0; k < cleanSamples.length; k++) {
+			Patient patient = cleanSamples[k].getPatients()[k];
+			for (int l = 0; l < patient.getPatientFeatures().length; l++) {
+				Feature patientFeature = patient.getPatientFeatures()[l];
+				Double average = cleaner.calculateFeatureAverage(cleanSamples[k], patientFeature);
+				patientFeature.setFeatureAverage(average);
+			}
+		}
 		
+		//System.out.println("There are " +  cleanSamples.length + " clean samples");
 		viewbeticUI.setMessage("Creating the Random Forest...");
-		forest = new RandomForest(patientCount); 
+		forest = new RandomForest(patientCount); 	
 		forest.createForest(cleanSamples); 
 		
 		viewbeticUI.setMessage("Ready to make prediction"); 
-		
-		logFile.close();
 	}
 	
-	private static final ViewbeticUI viewbeticUI = ViewbeticUI.createUI(new Home());
+	public static final ViewbeticUI viewbeticUI = ViewbeticUI.createUI(new Home());
 	static RandomForest forest;
 	static FeatureStore store = new FeatureStore();
-	private static SampleCleaner cleaner;
-	//public static Feature[] features;
-	public static String[] featureNames;
-	static Patient[] existingPatients; 
-	static Patient[] newPatients;
-	static Patient[] patients;
-	public static int patientCount;
-	public static int featureCount;
+	public static SampleCleaner cleaner = new SampleCleaner();
+	private static String[] featureNames;
+	private static Patient[] existingPatients;
+	Patient[] newPatients;
+	Patient lastPatient;
+	private static int patientCount;
+	static int featureCount;
 	Feature[] patientFeatures;
 	public String patientFirstName;
 	public String patientLastame;

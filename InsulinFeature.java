@@ -21,6 +21,7 @@ public class InsulinFeature implements Feature{
 		this.insulinIndex = 4;
 		this.insulinFeatureAverage = 0.0;
 		this.insulinSum = 0;
+		this.isFeatureUsed = false;
 	}
 	
 	@Override
@@ -45,7 +46,7 @@ public class InsulinFeature implements Feature{
 
 	@Override
 	public void setFeatureAverage(Double featureAverage) {
-		insulinFeatureAverage = featureAverage;
+		this.insulinFeatureAverage = featureAverage;
 	}
 
 	@Override
@@ -60,7 +61,7 @@ public class InsulinFeature implements Feature{
 	
 	@Override
 	public void setFeatureValue(Integer featureValue) {
-		//this.insulin = featureValue;
+		this.insulin = featureValue.doubleValue();
 	}
 	
 	@Override
@@ -81,5 +82,10 @@ public class InsulinFeature implements Feature{
 	@Override
 	public void setIsFeatureUsed(boolean isFeatureUsed) {
 		this.isFeatureUsed = isFeatureUsed;
+	}
+
+	@Override
+	public void setFeatureValueToNull() { 
+		this.insulin = 0.0; 
 	}	
 }

@@ -9,7 +9,7 @@ public class Patient{
 		this.patientFeatures = features;
 	}
 	
-	public Integer getPatientId() {
+	public Integer getPatientID() {
 		return patientId;
 	}
 	

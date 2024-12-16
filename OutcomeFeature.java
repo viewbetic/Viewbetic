@@ -21,6 +21,7 @@ public class OutcomeFeature implements Feature {
 		this.outcomeIndex = 8;
 		this.outcomeFeatureAverage = 0.0;
 		this.outcomeSum = 0;
+		this.isFeatureUsed = false;
 	}
 
 	@Override
@@ -55,7 +56,11 @@ public class OutcomeFeature implements Feature {
 	
 	@Override
 	public void setFeatureValue(Integer featureValue) {
-		this.outcome = featureValue;
+		if( featureValue == null) {
+			featureValue = 0;
+		} else {
+			this.outcome = featureValue;
+		}
 	}
 	
 	@Override
@@ -82,5 +87,10 @@ public class OutcomeFeature implements Feature {
 	public void setIsFeatureUsed(boolean isFeatureUsed) {
 		this.isFeatureUsed = isFeatureUsed;
 		
+	}
+
+	@Override
+	public void setFeatureValueToNull() { 
+		this.outcome = 0; 
 	}
 }

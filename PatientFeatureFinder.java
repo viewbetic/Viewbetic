@@ -80,4 +80,9 @@ public class PatientFeatureFinder implements FeatureFinder {
 		this.isFeatureLocated = isFeatureUsed;
 	}
 
+	@Override
+	public void setFeatureValueToNull() { 
+		this.featureValue = 0; 
+	}
+
 }

@@ -19,4 +19,5 @@ public interface Feature {
 	
 	public boolean isFeatureUsed();
 	public void setIsFeatureUsed(boolean isFeatureUsed);
+	public void setFeatureValueToNull();
 }

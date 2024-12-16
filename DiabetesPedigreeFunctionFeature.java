@@ -21,6 +21,7 @@ public class DiabetesPedigreeFunctionFeature implements Feature {
 		this.diabetesPedigreeFunctionIndex = 6;
 		this.diabetesPedigreeFunctionFeatureAverage = 0.0;
 		this.diabetesPedigreeFunctionSum = 0;
+		this.isFeatureUsed = false;
 	}
 
 	@Override
@@ -60,7 +61,7 @@ public class DiabetesPedigreeFunctionFeature implements Feature {
 	
 	@Override
 	public void setFeatureValue(Integer featureValue) {
-		//this.diabetesPedigreeFunction = featureValue;
+		this.diabetesPedigreeFunction = featureValue.doubleValue();
 	}
 	
 	@Override
@@ -81,5 +82,10 @@ public class DiabetesPedigreeFunctionFeature implements Feature {
 	@Override
 	public void setIsFeatureUsed(boolean isFeatureUsed) {
 		this.isFeatureUsed = isFeatureUsed;
+	}
+
+	@Override
+	public void setFeatureValueToNull() { 
+		this.diabetesPedigreeFunction = 0.0; 
 	}	
 }

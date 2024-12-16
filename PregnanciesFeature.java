@@ -21,6 +21,7 @@ public class PregnanciesFeature implements Feature {
 		this.pregnanciesIndex = 0;
 		this.pregnanciesFeatureAverage = 0.0;
 		this.pregnanciesSum = 0;
+		this.isFeatureUsed = false;
 	}
 
 	@Override
@@ -55,12 +56,20 @@ public class PregnanciesFeature implements Feature {
 
 	@Override
 	public void setFeatureValue(Double featureValue) {
-		this.pregnancies = featureValue;
+		if( featureValue == null) {
+			featureValue = 0.0;
+		} else {
+			this.pregnancies = featureValue;
+		}
 	}
 	
 	@Override
 	public void setFeatureValue(Integer featureValue) {
-		//this.pregnancies = featureValue;
+		if( featureValue == null) {
+			featureValue = 0;
+		} else {
+			this.pregnancies = featureValue.doubleValue();
+		}
 	}
 	
 	@Override
@@ -82,5 +91,10 @@ public class PregnanciesFeature implements Feature {
 	@Override
 	public void setIsFeatureUsed(boolean isFeatureUsed) {
 		this.isFeatureUsed = isFeatureUsed;
+	}
+
+	@Override
+	public void setFeatureValueToNull() { 
+		this.pregnancies = 0.0; 
 	}	
 }

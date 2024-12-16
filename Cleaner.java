@@ -12,6 +12,10 @@ public interface Cleaner {
 	
 	public boolean isFeatureValueEmpty(Sample sample);
 	
+	public boolean isFeatureSameValue(Sample sample, Feature feature);
+	
+	public boolean isFeatureAllZero(Sample sample, Feature feature);
+	
 	public Double calculateFeatureAverage(Sample sample, Feature feature);
 
 	public Sample addPatientFeature(Sample sample);
@@ -27,4 +31,6 @@ public interface Cleaner {
 	//public Sample removeFeatureValue(Sample sample, Feature feature);
 	
 	public Sample getCleanSample();
+	
+	
 }

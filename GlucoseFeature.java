@@ -22,6 +22,7 @@ public class GlucoseFeature implements Feature{
 		this.glucoseIndex = 1;
 		this.glucoseFeatureAverage = 0.0;
 		this.glucoseSum = 0;
+		this.isFeatureUsed = false;
 	}
 
 	@Override
@@ -46,7 +47,7 @@ public class GlucoseFeature implements Feature{
 
 	@Override
 	public void setFeatureAverage(Double featureAverage) {
-		glucoseFeatureAverage = featureAverage;
+		this.glucoseFeatureAverage = featureAverage;
 	}
 
 	@Override
@@ -61,7 +62,7 @@ public class GlucoseFeature implements Feature{
 	
 	@Override
 	public void setFeatureValue(Integer featureValue) {
-		//this.glucose = featureValue;
+		this.glucose = featureValue.doubleValue();
 	}
 	
 	@Override
@@ -82,5 +83,10 @@ public class GlucoseFeature implements Feature{
 	@Override
 	public void setIsFeatureUsed(boolean isFeatureUsed) {
 		this.isFeatureUsed = isFeatureUsed;
+	}
+
+	@Override
+	public void setFeatureValueToNull() { 
+		this.glucose = 0.0; 
 	}
 }

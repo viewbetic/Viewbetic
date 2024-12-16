@@ -21,6 +21,7 @@ public class SkinThicknessFeature implements Feature{
 		this.skinThicknessIndex = 3;
 		this.skinThicknessFeatureAverage = 0.0;
 		this.skinThicknessSum = 0;
+		this.isFeatureUsed = false;
 	}
 
 	@Override
@@ -55,12 +56,20 @@ public class SkinThicknessFeature implements Feature{
 
 	@Override
 	public void setFeatureValue(Double featureValue) {
-		this.skinThickness = featureValue;
+		if( featureValue == null) {
+			featureValue = 0.0;
+		} else {
+			this.skinThickness = featureValue;
+		}
 	}
 	
 	@Override
 	public void setFeatureValue(Integer featureValue) {
-		//this.skinThickness = featureValue;
+		if( featureValue == null) {
+			featureValue = 0;
+		} else {
+			this.skinThickness = featureValue.doubleValue();
+		}
 	}
 	
 	@Override
@@ -81,5 +90,10 @@ public class SkinThicknessFeature implements Feature{
 	@Override
 	public void setIsFeatureUsed(boolean isFeatureUsed) {
 		this.isFeatureUsed = isFeatureUsed;
+	}
+
+	@Override
+	public void setFeatureValueToNull() { 
+		this.skinThickness = 0.0; 
 	}
 }

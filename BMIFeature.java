@@ -60,7 +60,7 @@ public class BMIFeature implements Feature{
 	
 	@Override
 	public void setFeatureValue(Integer featureValue) {
-		//this.bmi = featureValue;
+		this.bmi = featureValue.doubleValue();
 	}
 	
 	@Override
@@ -82,5 +82,10 @@ public class BMIFeature implements Feature{
 	@Override
 	public void setIsFeatureUsed(boolean isFeatureUsed) {
 		this.isFeatureUsed = isFeatureUsed;
+	}
+
+	@Override
+	public void setFeatureValueToNull() { 
+		this.bmi = 0.0; 
 	}		
 }

@@ -1,12 +1,15 @@
 package home;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 
-public class ViewbeticUI {
+public class ViewbeticUI{
 
 	private static Home home;
 	private static ViewbeticUI ui = null;
@@ -57,6 +60,9 @@ public class ViewbeticUI {
 	private static String dpfText;
 	private static String ageText;
 	private static String bmiText;
+	
+	private static Image image; 
+	private static String pathToImageFile = "src/home/files/image.png";
 
 	private ViewbeticUI(Home home) {
 		ViewbeticUI.home = home;
@@ -82,34 +88,34 @@ public class ViewbeticUI {
 		pregnanciesLabel = new JLabel("Number of Pregnancies: ");
 		pregnanciesField = new JTextField(5);
 
-		glucoseLabel = new JLabel("Glucose: ");
+		glucoseLabel = new JLabel("Glucose (mg/dL): ");
 		glucoseField = new JTextField(5);
 
-		bloodPressureLabel = new JLabel("Blood Pressure: ");
+		bloodPressureLabel = new JLabel("Blood Pressure (mmHg): ");
 		bloodPressureField = new JTextField(5);
 
-		skinThicknessLabel = new JLabel("Skin Thickness: ");
+		skinThicknessLabel = new JLabel("Skin Thickness (mm): ");
 		skinThicknessField = new JTextField(5);
 
-		insulinLabel = new JLabel("Insulin: ");
+		insulinLabel = new JLabel("Insulin (µU/mL): ");
 		insulinField = new JTextField(5);
 
-		bmiLabel = new JLabel("BMI: ");
+		bmiLabel = new JLabel("BMI (kg/m²): ");
 		bmiField = new JTextField(5);
 
 		dpfLabel = new JLabel("DPF: ");
 		dpfField = new JTextField(5);
 
-		/*
-		 * heightLabel = new JLabel("Height (cm): "); heightField = new JTextField(5);
-		 * 
-		 * weightLabel = new JLabel("Weight (kg): "); weightField = new JTextField(5);
-		 */
+		
+		//heightLabel = new JLabel("Height (cm): "); heightField = new JTextField(5);
+		 
+		//weightLabel = new JLabel("Weight (kg): "); weightField = new JTextField(5);
+		
 
 		predictionButton = new JButton("Prediction");
 		feedbackButton = new JButton("Feedback");
 
-		outputArea = new JTextArea(5, 20);
+		outputArea = new JTextArea(12, 20);
 		outputArea.setEditable(false);
 		scrollPane = new JScrollPane(outputArea);
 
@@ -187,17 +193,19 @@ public class ViewbeticUI {
 		frame.add(feedbackButton, c);
 
 		c.gridx = 0;
-		c.gridy = 12;
-		c.gridwidth = 2;
-		c.anchor = GridBagConstraints.CENTER;
-		frame.add(new JLabel("Output"), c);
-
-		c.gridx = 0;
 		c.gridy = 13;
 		c.gridwidth = 2;
 		c.fill = GridBagConstraints.BOTH;
 		frame.getContentPane().add(scrollPane, c);
-
+		
+		try {
+			image = ImageIO.read(new File(pathToImageFile));
+		} catch (IOException e) {
+			System.out.println("Cannot get image: "  + e.getMessage());
+		}
+		
+		frame.setIconImage(image);
+		
 		frame.pack();
 		frame.setVisible(true);
 		
@@ -216,24 +224,36 @@ public class ViewbeticUI {
 											  getDPFText(),
 											  getAgeText(), 
 											  "0");
+			  clearFields();
 		  }
 		});
 		
 		feedbackButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				outputArea.append("Advice is: " + "\n");
-				ViewbeticUI.home.createFeedbackForPatient(getFirstNameText(), 
-						  								  getLastNameText());
+				ViewbeticUI.home.createFeedbackForPatient();
 			}
-		});			  
+		});			
 	}
 
 	public static ViewbeticUI createUI(Home home) {
 		if (ui == null) {
 			ui = new ViewbeticUI(home);
 		}
+		try {
+			addImageIcon(pathToImageFile);
+		} catch(Exception e) {
+			System.out.println("Cannot add image: " + e);
+		}
+		
 		return ui;
+	}
+	
+	
+
+	private static void addImageIcon(String pathToImageFile) throws IOException {
+		
+		image = ImageIO.read(new File(pathToImageFile));
 	}
 
 	public String getFirstNameText() {
@@ -342,5 +362,20 @@ public class ViewbeticUI {
 	
 	public void setFeedbackMessage(String message) {
 		outputArea.append(message+ "\n");
+	}
+	
+	public void clearFields() {
+		firstNameField.setText("");
+		lastNameField.setText("");
+		//heightField.setText("");
+		//weightField.setText("");
+		pregnanciesField.setText("");
+		glucoseField.setText("");
+		bloodPressureField.setText("");
+		skinThicknessField.setText("");
+		insulinField.setText("");
+		dpfField.setText("");
+		ageField.setText("");
+		bmiField.setText("");
 	}
 }

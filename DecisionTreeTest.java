@@ -42,7 +42,7 @@ public class DecisionTreeTest {
 		
 		samples = new Sample[1];
 		
-		samples[0] = new Sample(patients.length);
+		samples[0] = Sample.getSample(patients.length);
 		
 		samples[0].addToPatientSample(patient1);
 		samples[0].addToPatientSample(patient2);

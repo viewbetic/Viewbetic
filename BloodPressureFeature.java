@@ -21,6 +21,7 @@ public class BloodPressureFeature implements Feature{
 		this.bloodPressureIndex = 2;
 		this.bloodPressureFeatureAverage = 0.0;
 		this.bloodPressureSum = 0;
+		this.isFeatureUsed = false;
 	}
 
 	@Override
@@ -45,7 +46,7 @@ public class BloodPressureFeature implements Feature{
 
 	@Override
 	public void setFeatureAverage(Double featureAverage) {
-		bloodPressureFeatureAverage = featureAverage;
+		this.bloodPressureFeatureAverage = featureAverage;
 	}
 
 	@Override
@@ -55,12 +56,20 @@ public class BloodPressureFeature implements Feature{
 
 	@Override
 	public void setFeatureValue(Double featureValue) {
-		this.bloodPressure = featureValue;
+		if( featureValue == null) {
+			featureValue = 0.0;
+		} else {
+			this.bloodPressure = featureValue;
+		}
 	}
 	
 	@Override
 	public void setFeatureValue(Integer featureValue) {
-		//this.bloodPressure = featureValue;
+		if( featureValue == null) {
+			featureValue = 0;
+		} else {
+			this.bloodPressure = featureValue.doubleValue();
+		}
 	}
 	
 	@Override
@@ -81,6 +90,10 @@ public class BloodPressureFeature implements Feature{
 	@Override
 	public void setIsFeatureUsed(boolean isFeatureUsed) {
 		this.isFeatureUsed = isFeatureUsed;
-		
+	}
+
+	@Override
+	public void setFeatureValueToNull() { 
+		this.bloodPressure = 0.0; 
 	}		
 }
